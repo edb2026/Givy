@@ -28,6 +28,8 @@
     .upload-btn { background: #2a2a2a; border: 1px solid #C5A267; padding: 10px 15px; border-radius: 30px; color: #C5A267; cursor: pointer; display: inline-flex; gap: 8px; margin-bottom: 10px; }
     .upload-info { color: #888; font-size: 12px; margin-top: 5px; }
     .storage-info { color: #888; font-size: 11px; margin-top: 8px; }
+    .progress-bar { height: 4px; background: #1E1E1E; border-radius: 2px; margin-top: 8px; overflow: hidden; display: none; }
+    .progress-fill { height: 100%; background: #C5A267; width: 0%; transition: width 0.2s; }
   </style>
 </head>
 <body>
@@ -57,19 +59,20 @@
   <textarea id="desc" placeholder="Description" rows="3"></textarea>
   <input type="number" id="price" placeholder="Price USD *">
   <input type="text" id="fbUser" placeholder="Facebook username (e.g. john.doe)">
-  
+
   <!-- Image Upload Section (up to 10 photos) -->
   <div style="margin: 15px 0;">
     <label style="color:#C5A267;">📸 Product Images (up to 10 photos)</label>
-    <div class="upload-info">Images are automatically compressed to fit browser storage.</div>
+    <div class="upload-info">Images auto-compressed. Uses IndexedDB — huge capacity.</div>
     <div style="margin-top:8px;">
       <input type="file" id="imageInput" accept="image/*" multiple style="display:none">
       <button type="button" class="upload-btn" id="uploadBtn">📤 Select Images (Max 10)</button>
       <span id="compressStatus" style="color:#C5A267; font-size:12px; margin-left:10px;"></span>
     </div>
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
     <div id="previewGrid" class="preview-grid"></div>
   </div>
-  
+
   <div style="display: flex; gap: 10px; flex-wrap: wrap;">
     <button id="saveBtn">💾 Save Product</button>
     <button id="addMoreBtn">➕ Add More</button>
@@ -87,9 +90,9 @@
     <button id="addCatBtn">Add Category</button>
   </div>
   <div id="catList" style="margin-top: 15px;"></div>
-  
+
   <hr>
-  
+
   <h3>📘 Facebook Settings</h3>
   <input type="text" id="globalFb" placeholder="Default Facebook username">
   <button id="saveGlobalFbBtn">Save Global FB</button>
@@ -110,31 +113,138 @@
 
 <script>
   const PASSWORD = "admin123";
-  const MAX_IMAGE_DIMENSION = 1200; // resize longest side to this
-  const JPEG_QUALITY = 0.75;
+  const MAX_IMAGE_DIMENSION = 900;
+  const JPEG_QUALITY = 0.70;
+  const DB_NAME = 'GivyRewardsDB';
+  const DB_VERSION = 1;
+  const STORE_PRODUCTS = 'products';
+  const STORE_SETTINGS = 'settings';
+
   let products = [];
   let categories = ['furniture', 'seating', 'beds', 'rugs', 'decor', 'office'];
   let globalFb = '';
-  let currentImages = []; // compressed base64 images for current product
+  let currentImages = [];
   let currentPreviewImages = [];
+  let db = null;
+
+  // ========== INDEXEDDB ==========
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const database = e.target.result;
+        if (!database.objectStoreNames.contains(STORE_PRODUCTS)) {
+          database.createObjectStore(STORE_PRODUCTS, { keyPath: 'id' });
+        }
+        if (!database.objectStoreNames.contains(STORE_SETTINGS)) {
+          database.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
+        }
+      };
+      req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+      req.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  function idbGetAll(storeName) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function idbGet(storeName, key) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const req = tx.objectStore(storeName).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function idbPut(storeName, value) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).put(value);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  }
+
+  function idbDelete(storeName, key) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  // ========== MIGRATION from old localStorage ==========
+  async function migrateFromLocalStorage() {
+    const migratedFlag = await idbGet(STORE_SETTINGS, 'migrated_v1');
+    if (migratedFlag) return;
+
+    try {
+      const oldProducts = localStorage.getItem('givy_products');
+      if (oldProducts) {
+        const parsed = JSON.parse(oldProducts);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          for (const p of parsed) {
+            await idbPut(STORE_PRODUCTS, p);
+          }
+        }
+      }
+      const oldCats = localStorage.getItem('givy_categories');
+      if (oldCats) {
+        await idbPut(STORE_SETTINGS, { key: 'categories', value: JSON.parse(oldCats) });
+      }
+      const oldFb = localStorage.getItem('givy_global_fb');
+      if (oldFb) {
+        await idbPut(STORE_SETTINGS, { key: 'globalFb', value: oldFb });
+      }
+    } catch(e) {
+      console.warn('Migration warning:', e);
+    }
+
+    await idbPut(STORE_SETTINGS, { key: 'migrated_v1', value: true });
+
+    try {
+      localStorage.removeItem('givy_products');
+    } catch(e) {}
+  }
 
   // ========== AUTH ==========
-  document.getElementById('loginBtn').onclick = () => {
+  document.getElementById('loginBtn').onclick = async () => {
     const pwd = document.getElementById('password').value;
     if(pwd === PASSWORD) {
       localStorage.setItem('admin_auth', 'true');
       document.getElementById('loginBox').style.display = 'none';
       document.getElementById('adminPanel').style.display = 'block';
-      loadAll();
+      await initApp();
     } else {
       alert('Wrong password');
     }
   };
-  
+
+  async function initApp() {
+    try {
+      await openDB();
+      await migrateFromLocalStorage();
+      await loadAll();
+    } catch(err) {
+      console.error('DB init failed:', err);
+      alert('Failed to open local database: ' + (err && err.message ? err.message : err));
+    }
+  }
+
   if(localStorage.getItem('admin_auth') === 'true') {
     document.getElementById('loginBox').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
-    loadAll();
+    initApp();
   }
 
   // ========== IMAGE COMPRESSION ==========
@@ -145,7 +255,6 @@
         const img = new Image();
         img.onload = () => {
           let { width, height } = img;
-          // Resize keeping aspect ratio
           if (width > height) {
             if (width > MAX_IMAGE_DIMENSION) {
               height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
@@ -161,8 +270,9 @@
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#1E1E1E';
+          ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          // Always export as JPEG to shrink size (PNG with transparency will get black bg, acceptable for product photos)
           try {
             const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
             resolve(dataUrl);
@@ -213,11 +323,15 @@
     const remaining = 10 - currentPreviewImages.length;
     const toAdd = files.slice(0, remaining);
     const statusEl = document.getElementById('compressStatus');
+    const bar = document.getElementById('progressBar');
+    const fill = document.getElementById('progressFill');
+    bar.style.display = 'block';
+    fill.style.width = '0%';
     let done = 0;
-    statusEl.textContent = `⏳ Processing 0/${toAdd.length}...`;
 
     for (const file of toAdd) {
       if (!file.type.startsWith('image/')) { done++; continue; }
+      statusEl.textContent = `⏳ ${done + 1}/${toAdd.length} — compressing...`;
       try {
         const compressed = await compressImage(file);
         currentImages.push(compressed);
@@ -227,14 +341,14 @@
         console.error('Compression failed:', err);
       }
       done++;
-      statusEl.textContent = `⏳ Processing ${done}/${toAdd.length}...`;
+      fill.style.width = `${Math.round((done / toAdd.length) * 100)}%`;
     }
     statusEl.textContent = `✅ ${toAdd.length} image(s) ready`;
-    setTimeout(() => { statusEl.textContent = ''; }, 2500);
+    setTimeout(() => { statusEl.textContent = ''; bar.style.display = 'none'; }, 2000);
 
     e.target.value = '';
-    if(toAdd.length < files.length) showToast(`Max 10 images. Added ${toAdd.length} of ${files.length}`);
-    updateStorageInfo();
+    if(toAdd.length < files.length) showToast(`Max 10 per product. Added ${toAdd.length} of ${files.length}`);
+    await updateStorageInfo();
   };
 
   function resetImages() {
@@ -244,55 +358,82 @@
   }
 
   // ========== STORAGE INFO ==========
-  function updateStorageInfo() {
+  async function updateStorageInfo() {
+    const el = document.getElementById('storageInfo');
     try {
-      const data = localStorage.getItem('givy_products') || '';
-      const kb = (data.length / 1024).toFixed(1);
-      document.getElementById('storageInfo').textContent = `💾 Current storage: ~${kb} KB (browser limit ~5000 KB)`;
-    } catch(e) {}
+      if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        const usedMB = (est.usage / 1048576).toFixed(1);
+        const quotaMB = (est.quota / 1048576).toFixed(0);
+        el.textContent = `💾 Used: ${usedMB} MB of ~${quotaMB} MB available (IndexedDB)`;
+      } else {
+        el.textContent = `💾 Using IndexedDB (large capacity)`;
+      }
+    } catch(e) {
+      el.textContent = `💾 Using IndexedDB (large capacity)`;
+    }
   }
 
   // ========== LOAD & SAVE ==========
-  function loadAll() {
-    const storedProducts = localStorage.getItem('givy_products');
-    products = storedProducts ? JSON.parse(storedProducts) : [];
-    
-    const storedCats = localStorage.getItem('givy_categories');
-    if(storedCats) categories = JSON.parse(storedCats);
-    
-    const storedFb = localStorage.getItem('givy_global_fb');
-    globalFb = storedFb || '';
+  async function loadAll() {
+    products = await idbGetAll(STORE_PRODUCTS);
+    products.sort((a, b) => (a.id || 0) - (b.id || 0));
+
+    const catsRow = await idbGet(STORE_SETTINGS, 'categories');
+    if (catsRow && catsRow.value) categories = catsRow.value;
+
+    const fbRow = await idbGet(STORE_SETTINGS, 'globalFb');
+    globalFb = (fbRow && fbRow.value) || '';
     document.getElementById('globalFb').value = globalFb;
-    
+
     renderCategorySelect();
     renderCatList();
     renderProductList();
     document.getElementById('count').innerText = products.length;
-    updateStorageInfo();
+    await updateStorageInfo();
   }
 
-  function saveAll() {
+  function notifyShop() {
     try {
-      localStorage.setItem('givy_products', JSON.stringify(products));
-      localStorage.setItem('givy_categories', JSON.stringify(categories));
-      localStorage.setItem('givy_global_fb', globalFb);
-      localStorage.setItem('givy_updated', Date.now());
-      renderProductList();
-      renderCatList();
+      const bc = new BroadcastChannel('givy_sync');
+      bc.postMessage({ type: 'update', ts: Date.now() });
+      bc.close();
+    } catch(e) {}
+    try { localStorage.setItem('givy_updated', String(Date.now())); } catch(e) {}
+  }
+
+  async function saveCategories() {
+    try {
+      await idbPut(STORE_SETTINGS, { key: 'categories', value: categories });
       renderCategorySelect();
-      document.getElementById('count').innerText = products.length;
-      updateStorageInfo();
+      renderCatList();
+      notifyShop();
       showToast('✅ Saved');
       return true;
     } catch(err) {
+      console.error(err);
+      alert('Save failed: ' + (err && err.message ? err.message : err));
+      return false;
+    }
+  }
+
+  async function saveProduct(product) {
+    try {
+      await idbPut(STORE_PRODUCTS, product);
+      notifyShop();
+      return true;
+    } catch(err) {
       console.error('Save failed:', err);
-      alert('⚠️ Storage limit exceeded!\n\nYour browser cannot save more data. Please:\n• Remove some images from this product\n• Or delete some older products\n\n(Browser localStorage limit is ~5MB)');
+      alert('⚠️ Save failed!\n\n' + (err && err.name === 'QuotaExceededError'
+        ? 'Device storage is full. Please delete some products or images.'
+        : (err && err.message ? err.message : err)));
       return false;
     }
   }
 
   function renderCategorySelect() {
     const select = document.getElementById('category');
+    const prev = select.value;
     select.innerHTML = '';
     categories.forEach(cat => {
       const opt = document.createElement('option');
@@ -300,6 +441,7 @@
       opt.textContent = cat;
       select.appendChild(opt);
     });
+    if (prev && categories.includes(prev)) select.value = prev;
   }
 
   // ========== CATEGORIES ==========
@@ -314,21 +456,20 @@
     });
   }
 
-  window.deleteCategory = (idx) => {
+  window.deleteCategory = async (idx) => {
     if(confirm('Delete this category?')) {
       categories.splice(idx, 1);
       if(categories.length === 0) categories = ['other'];
-      saveAll();
+      await saveCategories();
     }
   };
 
-  document.getElementById('addCatBtn').onclick = () => {
+  document.getElementById('addCatBtn').onclick = async () => {
     const newCat = document.getElementById('newCat').value.trim().toLowerCase();
     if(newCat && !categories.includes(newCat)) {
       categories.push(newCat);
       document.getElementById('newCat').value = '';
-      saveAll();
-      showToast(`Category "${newCat}" added`);
+      if (await saveCategories()) showToast(`Category "${newCat}" added`);
     } else {
       alert('Invalid or duplicate category');
     }
@@ -348,16 +489,17 @@
     document.getElementById('formTitle').innerHTML = '➕ Add New Product';
   }
 
-  document.getElementById('saveBtn').onclick = () => {
+  async function doSaveProduct() {
     const name = document.getElementById('name').value.trim();
     const price = parseFloat(document.getElementById('price').value);
     if(!name || isNaN(price)) {
       alert('Please fill Name and Price');
-      return;
+      return false;
     }
-    
+
+    const editId = document.getElementById('editId').value;
     const product = {
-      id: Date.now(),
+      id: editId ? parseInt(editId) : Date.now(),
       name: name,
       brand: document.getElementById('brand').value.trim(),
       category: document.getElementById('category').value,
@@ -366,33 +508,31 @@
       fbUser: document.getElementById('fbUser').value.trim(),
       images: [...currentImages]
     };
-    
-    const editId = document.getElementById('editId').value;
-    const snapshot = JSON.parse(JSON.stringify(products)); // for rollback
-    if(editId) {
-      const idx = products.findIndex(p => p.id == editId);
-      if(idx !== -1) {
-        product.id = parseInt(editId);
-        products[idx] = product;
-      }
-    } else {
-      products.push(product);
-    }
 
-    if (saveAll()) {
-      showToast(editId ? 'Product updated' : `"${name}" added`);
-      clearForm();
-    } else {
-      // rollback on storage failure
-      products = snapshot;
-    }
-  };
+    const ok = await saveProduct(product);
+    if (!ok) return false;
 
-  document.getElementById('addMoreBtn').onclick = () => {
-    const name = document.getElementById('name').value.trim();
-    if(name) document.getElementById('saveBtn').click();
+    const idx = products.findIndex(p => p.id == product.id);
+    if (idx !== -1) products[idx] = product; else products.push(product);
+
+    renderProductList();
+    document.getElementById('count').innerText = products.length;
+    await updateStorageInfo();
+    showToast(editId ? 'Product updated' : `"${name}" added`);
     clearForm();
-    showToast('Ready for next product');
+    return true;
+  }
+
+  document.getElementById('saveBtn').onclick = doSaveProduct;
+
+  document.getElementById('addMoreBtn').onclick = async () => {
+    const name = document.getElementById('name').value.trim();
+    if(name) {
+      await doSaveProduct();
+    } else {
+      clearForm();
+      showToast('Ready for next product');
+    }
   };
 
   document.getElementById('cancelEditBtn').onclick = () => clearForm();
@@ -416,12 +556,20 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  window.deleteProduct = (id) => {
+  window.deleteProduct = async (id) => {
     if(confirm('Delete this product?')) {
-      products = products.filter(p => p.id != id);
-      saveAll();
-      if(document.getElementById('editId').value == id) clearForm();
-      showToast('Product deleted');
+      try {
+        await idbDelete(STORE_PRODUCTS, parseInt(id));
+        products = products.filter(p => p.id != id);
+        renderProductList();
+        document.getElementById('count').innerText = products.length;
+        if(document.getElementById('editId').value == id) clearForm();
+        notifyShop();
+        await updateStorageInfo();
+        showToast('Product deleted');
+      } catch(err) {
+        alert('Delete failed: ' + err.message);
+      }
     }
   };
 
@@ -449,10 +597,15 @@
   }
 
   // ========== FACEBOOK SETTINGS ==========
-  document.getElementById('saveGlobalFbBtn').onclick = () => {
+  document.getElementById('saveGlobalFbBtn').onclick = async () => {
     globalFb = document.getElementById('globalFb').value.trim();
-    localStorage.setItem('givy_global_fb', globalFb);
-    showToast('Global Facebook username saved');
+    try {
+      await idbPut(STORE_SETTINGS, { key: 'globalFb', value: globalFb });
+      notifyShop();
+      showToast('Global Facebook username saved');
+    } catch(err) {
+      alert('Save failed: ' + err.message);
+    }
   };
 
   document.getElementById('syncFBBtn').onclick = () => {
@@ -476,7 +629,7 @@
     setTimeout(() => t.classList.remove('show'), 2000);
   }
 
-  function escapeHtml(str) { return str ? str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
+  function escapeHtml(str) { return str ? String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) : ''; }
 </script>
 
 </body>
