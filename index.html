@@ -28,6 +28,8 @@
     .product-img img { width: 100%; height: 100%; object-fit: cover; }
     .img-placeholder { font-size: 60px; }
     .image-counter { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 20px; font-size: 11px; }
+    .sold-badge { position: absolute; bottom: 10px; left: 10px; background: #E41E3F; color: white; font-weight: bold; font-size: 13px; padding: 5px 12px; border-radius: 6px; letter-spacing: 1px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-transform: uppercase; }
+    .sold-card .product-img img { filter: grayscale(35%) brightness(0.85); }
     .brand { color: #C5A267; font-size: 12px; }
     .title { font-size: 18px; font-weight: bold; margin: 8px 0; }
     .desc { color: #999; font-size: 13px; margin: 10px 0; line-height: 1.4; }
@@ -166,6 +168,19 @@
         };
         container.appendChild(btn);
       });
+
+      // Sold archive filter
+      const soldBtn = document.createElement('button');
+      soldBtn.className = 'filter-btn' + (activeFilter === '__sold' ? ' active' : '');
+      soldBtn.textContent = '🏷️ Sold';
+      soldBtn.style.borderColor = '#E41E3F';
+      soldBtn.onclick = () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        soldBtn.classList.add('active');
+        activeFilter = '__sold';
+        renderProducts();
+      };
+      container.appendChild(soldBtn);
     }
 
     function openLightbox(images, index) {
@@ -246,10 +261,18 @@
 
     function renderProducts() {
       const container = document.getElementById('products');
-      const filtered = activeFilter === 'all' ? products : products.filter(p => p.category === activeFilter);
+      let filtered;
+      if (activeFilter === '__sold') {
+        filtered = products.filter(p => p.sold);
+      } else if (activeFilter === 'all') {
+        filtered = products.filter(p => !p.sold);
+      } else {
+        filtered = products.filter(p => !p.sold && p.category === activeFilter);
+      }
 
       if(filtered.length === 0) {
-        container.innerHTML = '<div class="empty">✨ No products</div>';
+        const msg = activeFilter === '__sold' ? '📭 No sold products yet' : '✨ No products';
+        container.innerHTML = `<div class="empty">${msg}</div>`;
         return;
       }
 
@@ -258,26 +281,28 @@
         const images = p.images && p.images.length ? p.images : [];
         const firstImage = images.length > 0 ? images[0] : null;
         const imageCount = images.length;
+        const isSold = !!p.sold;
 
         const card = document.createElement('div');
-        card.className = 'product-card';
+        card.className = 'product-card' + (isSold ? ' sold-card' : '');
         card.innerHTML = `
           <div class="product-img">
             ${firstImage ? `<img src="${firstImage}" alt="${escapeHtml(p.name)}">` : '<div class="img-placeholder">🪑</div>'}
             ${imageCount > 1 ? `<div class="image-counter">📷 ${imageCount}</div>` : ''}
+            ${isSold ? `<div class="sold-badge">Sold</div>` : ''}
           </div>
           <div class="brand">${escapeHtml(p.brand || 'GIVY STUDIO')}</div>
           <div class="title">${escapeHtml(p.name)}</div>
           <div class="desc">${escapeHtml(p.desc || 'Luxury piece')}</div>
           <div class="price">$${p.price}</div>
           <div class="action-btns">
-            <button class="fb-btn" title="Message seller on Messenger">💬 Interested</button>
+            <button class="fb-btn" title="Message seller on Messenger"${isSold ? ' disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>💬 Interested</button>
             <button class="mp-btn" title="Find on Facebook Marketplace">🛒 Marketplace</button>
           </div>
         `;
         const imgDiv = card.querySelector('.product-img');
         imgDiv.onclick = () => openLightbox(images, 0);
-        card.querySelector('.fb-btn').onclick = () => openMessenger(p);
+        if (!isSold) card.querySelector('.fb-btn').onclick = () => openMessenger(p);
         card.querySelector('.mp-btn').onclick = () => openMarketplace(p);
         container.appendChild(card);
       });
