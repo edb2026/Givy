@@ -1,343 +1,219 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="GivyRewards - Give away your stuff and get rewarded. Free pickup for furniture, household items, and more.">
-    <title>GivyRewards</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Nunito', system-ui, sans-serif;
-            background: #1a1a2e;
-            color: #1a1a1a;
-            margin: 0;
-            padding-bottom: 80px; /* space for bottom navigation */
-        }
-
-        .screen { display: none; }
-        .screen.active { display: block; animation: fadeIn 0.3s ease; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .page-bg {
-            background: #1a1a2e;
-            min-height: 100vh;
-            padding: 16px;
-        }
-
-        .card {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 22px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            margin-bottom: 16px;
-        }
-
-        .btn {
-            background: #059669;
-            color: white;
-            padding: 16px;
-            width: 100%;
-            border-radius: 18px;
-            font-weight: 900;
-            font-size: 16px;
-            box-shadow: 0 6px 20px rgba(5,150,105,0.45);
-            margin-bottom: 14px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        .back-btn {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            color: white;
-            border-radius: 12px;
-            padding: 8px 16px;
-            font-weight: 900;
-            font-size: 15px;
-            cursor: pointer;
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #111827;
-            border-top: 1px solid #374151;
-            display: flex;
-            padding: 8px 0;
-            z-index: 50;
-        }
-
-        .nav-item {
-            flex: 1;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 6px 0;
-        }
-
-        .nav-item.active {
-            color: #10b981;
-        }
-
-        .nav-item span {
-            display: block;
-            font-size: 24px;
-            margin-bottom: 2px;
-        }
-
-        .inp {
-            background: #f9fafb;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 15px;
-            font-weight: 700;
-            width: 100%;
-            color: #111827;
-            margin-bottom: 10px;
-        }
-
-        .inp:focus {
-            outline: none;
-            border-color: #059669;
-            background: #fff;
-        }
-
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GivyRewardsShop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0A0A0A; font-family: Arial, sans-serif; color: #EDEDED; padding: 20px; }
+    h1 { text-align: center; color: #C5A267; margin-bottom: 20px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px; }
+    .filter-btn { background: #1A1A1A; border: 1px solid #333; padding: 8px 20px; border-radius: 40px; color: white; cursor: pointer; }
+    .filter-btn.active { background: #C5A267; color: black; }
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+    .product-card { background: #121212; border-radius: 16px; padding: 15px; transition: transform 0.2s; }
+    .product-card:hover { transform: translateY(-5px); }
+    .product-img { background: #1E1E1E; height: 250px; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 15px; position: relative; cursor: pointer; }
+    .product-img img { width: 100%; height: 100%; object-fit: cover; }
+    .img-placeholder { font-size: 60px; }
+    .image-counter { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 20px; font-size: 11px; }
+    .brand { color: #C5A267; font-size: 12px; }
+    .title { font-size: 18px; font-weight: bold; margin: 8px 0; }
+    .desc { color: #999; font-size: 13px; margin: 10px 0; line-height: 1.4; }
+    .price { color: #C5A267; font-size: 20px; font-weight: bold; }
+    .fb-btn { background: #1877F2; border: none; padding: 10px; border-radius: 30px; color: white; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; }
+    .admin-icon { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; background: #C5A267; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0.3; cursor: pointer; z-index: 999; }
+    .empty { text-align: center; padding: 50px; color: #666; }
+    .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: 0.2s; }
+    .lightbox.active { visibility: visible; opacity: 1; }
+    .lightbox img { max-width: 90%; max-height: 85%; object-fit: contain; user-select: none; }
+    .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; cursor: pointer; color: white; user-select: none; }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: white; font-size: 30px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; user-select: none; }
+    .lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+    .lightbox-prev { left: 20px; }
+    .lightbox-next { right: 20px; }
+    .lightbox-counter { position: absolute; top: 20px; left: 30px; color: white; font-size: 16px; background: rgba(0,0,0,0.5); padding: 6px 14px; border-radius: 20px; }
+    .lightbox-thumbs { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; max-width: 90%; overflow-x: auto; padding: 6px; }
+    .lightbox-thumb { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
+    .lightbox-thumb.active { border-color: #C5A267; }
+    .lightbox-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  </style>
 </head>
 <body>
+  <h1>🛋️ GivyRewardsShop</h1>
+  <div id="filters" class="filters"></div>
+  <div id="products" class="product-grid"><div class="empty">Loading...</div></div>
+  <div class="admin-icon" id="adminIcon">👑</div>
 
-<!-- HEADER -->
-<header style="background: linear-gradient(135deg,#059669 0%,#047857 100%); padding:16px; text-align:center;">
-    <div class="brand">
-        <div style="font-size:38px;font-weight:900;color:white;letter-spacing:1px;">Givy</div>
-        <div style="font-size:36px;font-weight:900;color:#FFD700;letter-spacing:3px;text-shadow:0 2px 6px rgba(0,0,0,0.4);">REWARDS</div>
-        <div style="font-size:13px;font-weight:800;color:white;background:rgba(0,0,0,0.25);display:inline-block;padding:3px 14px;border-radius:20px;margin-top:5px;">✨ Get rewarded for giving ✨</div>
-    </div>
-</header>
+  <div id="lightbox" class="lightbox">
+    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+    <div class="lightbox-counter" id="lbCounter"></div>
+    <button class="lightbox-nav lightbox-prev" onclick="navLightbox(-1)">‹</button>
+    <img id="lightboxImg" src="" alt="">
+    <button class="lightbox-nav lightbox-next" onclick="navLightbox(1)">›</button>
+    <div class="lightbox-thumbs" id="lbThumbs"></div>
+  </div>
 
-<!-- SCREENS -->
+  <script>
+    let products = [];
+    let categories = ['furniture', 'seating', 'beds', 'rugs', 'decor', 'office'];
+    let activeFilter = 'all';
+    let globalFb = '';
+    let clickCount = 0;
+    let lbImages = [];
+    let lbIndex = 0;
 
-<!-- HOME SCREEN -->
-<div id="home" class="screen active page-bg"> 
-
-<div class="text-white text-3xl font-black mb-1">Give away your stuff</div>
-    <div class="text-slate-300 text-base mb-6">Furniture, household items, office equipment.<br>We pick up for free.</div>
-
-    <!-- Rewards Card -->
-    <div class="card">
-        <div class="text-xl font-black text-gray-900 mb-1">🔥 Rewards System</div>
-        <div class="text-sm text-gray-600 mb-5">The more you give — the more you save</div>
-
-        <div class="h-6 bg-gray-200 rounded-full overflow-hidden mb-3">
-            <div class="h-full bg-gradient-to-r from-amber-400 via-violet-500 to-emerald-500 rounded-full w-full"></div>
-        </div>
-
-        <div class="grid grid-cols-3 text-center text-xs">
-            <div>
-                <span class="block text-3xl">🥇</span>
-                <span class="font-black text-amber-600">Gold</span>
-                <span class="block bg-amber-600 text-white rounded-full px-2 py-0.5 mx-auto w-fit">20%</span>
-                <span class="text-gray-500 text-[10px]">1–3 items</span>
-            </div>
-            <div>
-                <span class="block text-3xl">💎</span>
-                <span class="font-black text-violet-600">Diamond</span>
-                <span class="block bg-violet-600 text-white rounded-full px-2 py-0.5 mx-auto w-fit">30%</span>
-                <span class="text-gray-500 text-[10px]">4–7 items</span>
-            </div>
-            <div>
-                <span class="block text-3xl">🏆</span>
-                <span class="font-black text-emerald-600">Champion</span>
-                <span class="block bg-emerald-600 text-white rounded-full px-2 py-0.5 mx-auto w-fit">50%</span>
-                <span class="text-gray-500 text-[10px]">7+ items</span>
-            </div>
-        </div>
-    </div>
-
-    <button onclick="go('post')" class="btn">📦 Post an Item</button>
-    <button onclick="go('list')" class="btn bg-white text-emerald-700 border-2 border-emerald-700">📋 My Requests</button>
-
-    <!-- Info cards -->
-    <div class="card flex items-center gap-4">
-        <div class="text-4xl">🚚</div>
-        <div>
-            <h3 class="font-black">Free Pickup</h3>
-            <p class="text-sm text-gray-600">We collect your items at your chosen time</p>
-        </div>
-    </div>
-
-    <div class="card flex items-center gap-4">
-        <div class="text-4xl">📸</div>
-        <div>
-            <h3 class="font-black">Upload Photos</h3>
-            <p class="text-sm text-gray-600">Add multiple photos of your item</p>
-        </div>
-    </div>
-</div>
-
-<!-- POST SCREEN -->
-<div id="post" class="screen page-bg">
-    <div class="flex items-center gap-3 mb-6">
-        <button onclick="go('home')" class="back-btn">← Back</button>
-        <span class="text-white text-2xl font-black">Post an Item</span>
-    </div>
-
-    <div class="card">
-        <div class="uppercase text-xs tracking-widest text-slate-500 font-black mb-2">Item Details</div>
-        <input id="title" placeholder="Item title (e.g. IKEA Sofa)" class="inp">
-        <textarea id="desc" placeholder="Description" class="inp" rows="3"></textarea>
-
-        <div class="uppercase text-xs tracking-widest text-slate-500 font-black mb-2 mt-6">Pickup Address</div>
-        <input id="address" placeholder="Street address, city" class="inp">
-
-        <div class="uppercase text-xs tracking-widest text-slate-500 font-black mb-2 mt-6">Pickup Date & Time</div>
-        <input type="date" id="date" class="inp">
-        <div class="grid grid-cols-2 gap-3">
-            <input type="time" id="t1" class="inp">
-            <input type="time" id="t2" class="inp">
-        </div>
-
-        <div class="uppercase text-xs tracking-widest text-slate-500 font-black mb-2 mt-6">Contact Information</div>
-        <input id="email" placeholder="Email" class="inp">
-        <input id="phone" placeholder="Phone number" class="inp">
-
-        <div class="uppercase text-xs tracking-widest text-slate-500 font-black mb-2 mt-6">Photos (you can add multiple)</div>
-
-<input type="file" id="photo" multiple accept="image/*" class="block w-full text-sm text-gray-600 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-emerald-100 file:text-emerald-700">
-
-        <button onclick="submitPost(event)" id="submitBtn" class="btn mt-6">✅ Submit Request</button>
-    </div>
-</div>
-
-<!-- LIST SCREEN -->
-<div id="list" class="screen page-bg">
-    <div class="flex items-center gap-3 mb-6">
-        <button onclick="go('home')" class="back-btn">← Back</button>
-        <span class="text-white text-2xl font-black">My Requests</span>
-    </div>
-
-    <div id="items" class="space-y-4"></div>
-</div>
-
-<!-- BOTTOM NAVIGATION -->
-<div class="bottom-nav">
-    <div onclick="go('home')" class="nav-item active" id="nav-home">
-        <span>🏠</span> Home
-    </div>
-    <div onclick="go('post')" class="nav-item" id="nav-post">
-        <span>📦</span> Post
-    </div>
-    <div onclick="go('list')" class="nav-item" id="nav-list">
-        <span>📋</span> Requests
-    </div>
-</div>
-
-<script>
-let items = JSON.parse(localStorage.getItem("items") || "[]");
-
-function go(screen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screen).classList.add('active');
-
-    // Update active nav item
-    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-    document.getElementById('nav-' + screen).classList.add('active');
-
-    if (screen === 'list') renderItems();
-}
-
-function submitPost(e) {
-    e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    const originalText = btn.textContent;
-    btn.textContent = 'Saving...';
-    btn.disabled = true;
-
-    const title = document.getElementById('title').value.trim();
-    if (!title) {
-        alert("Please enter an item title");
-        btn.textContent = originalText;
-        btn.disabled = false;
-        return;
+    function loadData() {
+      const savedProducts = localStorage.getItem('givy_products');
+      products = savedProducts ? JSON.parse(savedProducts) : [];
+      
+      const savedCats = localStorage.getItem('givy_categories');
+      if(savedCats) categories = JSON.parse(savedCats);
+      
+      const savedFb = localStorage.getItem('givy_global_fb');
+      globalFb = savedFb || '';
+      
+      renderFilters();
+      renderProducts();
     }
 
-    const newItem = {
-        id: Date.now(),
-        title: title,
-        desc: document.getElementById('desc').value.trim(),
-        address: document.getElementById('address').value.trim(),
-        date: document.getElementById('date').value,
-        time: ${document.getElementById('t1').value} – ${document.getElementById('t2').value},
-        email: document.getElementById('email').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        photos: [] // photos support can be added later
+    function renderFilters() {
+      const container = document.getElementById('filters');
+      container.innerHTML = `<button class="filter-btn active" data-cat="all">All</button>`;
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.textContent = cat;
+        btn.onclick = () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeFilter = cat;
+          renderProducts();
+        };
+        container.appendChild(btn);
+      });
+      // also wire up the "All" button
+      container.querySelector('[data-cat="all"]').onclick = (e) => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        activeFilter = 'all';
+        renderProducts();
+      };
+    }
+
+    function openLightbox(images, index) {
+      if (!images || images.length === 0) return;
+      lbImages = images;
+      lbIndex = index || 0;
+      updateLightbox();
+      document.getElementById('lightbox').classList.add('active');
+    }
+
+    function updateLightbox() {
+      document.getElementById('lightboxImg').src = lbImages[lbIndex];
+      document.getElementById('lbCounter').textContent = `${lbIndex + 1} / ${lbImages.length}`;
+      // nav arrows hidden if only one image
+      const showNav = lbImages.length > 1;
+      document.querySelector('.lightbox-prev').style.display = showNav ? 'block' : 'none';
+      document.querySelector('.lightbox-next').style.display = showNav ? 'block' : 'none';
+      // thumbnails
+      const thumbs = document.getElementById('lbThumbs');
+      if (lbImages.length > 1) {
+        thumbs.style.display = 'flex';
+        thumbs.innerHTML = lbImages.map((src, i) => `
+          <div class="lightbox-thumb ${i === lbIndex ? 'active' : ''}" onclick="jumpLightbox(${i}); event.stopPropagation();">
+            <img src="${src}">
+          </div>
+        `).join('');
+      } else {
+        thumbs.style.display = 'none';
+      }
+    }
+
+    function navLightbox(dir) {
+      event.stopPropagation();
+      lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length;
+      updateLightbox();
+    }
+
+    function jumpLightbox(i) {
+      lbIndex = i;
+      updateLightbox();
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+    }
+
+    // close when clicking dark backdrop, but not when clicking image/controls
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+      if (e.target.id === 'lightbox') closeLightbox();
+    });
+
+    // keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('lightbox').classList.contains('active')) return;
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft' && lbImages.length > 1) { lbIndex = (lbIndex - 1 + lbImages.length) % lbImages.length; updateLightbox(); }
+      else if (e.key === 'ArrowRight' && lbImages.length > 1) { lbIndex = (lbIndex + 1) % lbImages.length; updateLightbox(); }
+    });
+
+    function openMessenger(fbUser, productName) {
+      let user = fbUser || globalFb;
+      if(!user) {
+        alert(`Contact seller about: ${productName}\n\nNo Facebook username set. Admin can add it.`);
+        return;
+      }
+      window.open('https://m.me/' + user.replace('@', ''), '_blank');
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('products');
+      const filtered = activeFilter === 'all' ? products : products.filter(p => p.category === activeFilter);
+      
+      if(filtered.length === 0) {
+        container.innerHTML = '<div class="empty">✨ No products</div>';
+        return;
+      }
+      
+      container.innerHTML = filtered.map((p, idx) => {
+        const images = p.images && p.images.length ? p.images : [];
+        const firstImage = images.length > 0 ? images[0] : null;
+        const imageCount = images.length;
+        const imagesAttr = encodeURIComponent(JSON.stringify(images));
+        
+        return `
+          <div class="product-card">
+            <div class="product-img" onclick='openLightbox(JSON.parse(decodeURIComponent("${imagesAttr}")), 0)'>
+              ${firstImage ? `<img src="${firstImage}" alt="${escapeHtml(p.name)}">` : '<div class="img-placeholder">🪑</div>'}
+              ${imageCount > 1 ? `<div class="image-counter">📷 ${imageCount}</div>` : ''}
+            </div>
+            <div class="brand">${escapeHtml(p.brand || 'GIVY STUDIO')}</div>
+            <div class="title">${escapeHtml(p.name)}</div>
+            <div class="desc">${escapeHtml(p.desc || 'Luxury piece')}</div>
+            <div class="price">$${p.price}</div>
+            <button class="fb-btn" onclick="openMessenger('${p.fbUser || ''}', '${escapeHtml(p.name)}')">💬 Facebook interesting</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('adminIcon').onclick = () => {
+      clickCount++;
+      setTimeout(() => clickCount = 0, 500);
+      if(clickCount >= 3) location.href = 'admin.html';
     };
 
-    items.unshift(newItem);
-    localStorage.setItem("items", JSON.stringify(items));
-
-    setTimeout(() => {
-        alert("Request saved successfully!");
-        btn.textContent = originalText;
-        btn.disabled = false;
-        go('list');
-    }, 600);
-}
-
-function renderItems() {
-    const container = document.getElementById('items');
-    container.innerHTML = '';
-
-    if (items.length === 0) {
-        container.innerHTML = `<div class="card text-center py-12">
-            <div class="text-6xl mb-4">📭</div>
-            <div class="font-black text-xl">No requests yet</div>
-            <div class="text-sm text-gray-500 mt-2">Post your first item to get started</div>
-        </div>`;
-        return;
-    }
-
-    items.forEach(item => {
-        const div = document.createElement('div');
-        div.className = "card";
-        div.innerHTML = `
-            <div class="font-black text-lg mb-2">${item.title}</div>
-            <div class="text-sm text-gray-600 mb-3">${item.desc || 'No description'}</div>
-            <div class="text-xs text-gray-500 space-y-1">
-                <div>📍 ${item.address}</div>
-                <div>📅 ${item.date} • ${item.time}</div>
-                ${item.email ? <div>✉️ ${item.email}</div> : ''}
-                ${item.phone ? <div>📱 ${item.phone}</div> : ''}
-            </div>
-        `;
-        container.appendChild(div);
+    window.addEventListener('storage', (e) => {
+      if(e.key === 'givy_products' || e.key === 'givy_categories' || e.key === 'givy_updated') loadData();
     });
-}
 
-// Initialize
-go('home');
-</script>
+    function escapeHtml(str) { return str ? String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) : ''; }
+    
+    loadData();
+  </script>
+
 </body>
 </html>
