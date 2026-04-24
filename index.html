@@ -23,7 +23,9 @@
     .title { font-size: 18px; font-weight: bold; margin: 8px 0; }
     .desc { color: #999; font-size: 13px; margin: 10px 0; line-height: 1.4; }
     .price { color: #C5A267; font-size: 20px; font-weight: bold; }
-    .fb-btn { background: #1877F2; border: none; padding: 10px; border-radius: 30px; color: white; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; }
+    .action-btns { display: flex; gap: 8px; margin-top: 15px; }
+    .fb-btn { background: #1877F2; border: none; padding: 10px; border-radius: 30px; color: white; font-weight: bold; flex: 1; cursor: pointer; font-size: 13px; }
+    .mp-btn { background: #2a7f4f; border: none; padding: 10px; border-radius: 30px; color: white; font-weight: bold; flex: 1; cursor: pointer; font-size: 13px; }
     .admin-icon { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; background: #C5A267; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0.3; cursor: pointer; z-index: 999; }
     .empty { text-align: center; padding: 50px; color: #666; }
     .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: 0.2s; }
@@ -71,7 +73,6 @@
     let lbIndex = 0;
     let db = null;
 
-    // ========== INDEXEDDB (read-only for shop) ==========
     function openDB() {
       return new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -120,14 +121,12 @@
         globalFb = (fbRow && fbRow.value) || '';
       } catch(err) {
         console.error('Load error:', err);
-        // Fallback to old localStorage if IndexedDB fails
         const savedProducts = localStorage.getItem('givy_products');
         products = savedProducts ? JSON.parse(savedProducts) : [];
         const savedCats = localStorage.getItem('givy_categories');
         if (savedCats) categories = JSON.parse(savedCats);
         globalFb = localStorage.getItem('givy_global_fb') || '';
       }
-
       renderFilters();
       renderProducts();
     }
@@ -214,13 +213,26 @@
       else if (e.key === 'ArrowRight' && lbImages.length > 1) { lbIndex = (lbIndex + 1) % lbImages.length; updateLightbox(); }
     });
 
-    function openMessenger(fbUser, productName) {
-      let user = fbUser || globalFb;
-      if(!user) {
-        alert(`Contact seller about: ${productName}\n\nNo Facebook username set. Admin can add it.`);
+    // ===== Messenger with prefilled message =====
+    function openMessenger(product) {
+      const user = (product.fbUser || globalFb || '').replace(/^@/, '').trim();
+      const msg = `Hello! I'm interested in "${product.name}" (${product.brand || 'GIVY STUDIO'}) — $${product.price}. Is it still available?`;
+      const encoded = encodeURIComponent(msg);
+
+      if (!user) {
+        alert(`No Facebook username set yet.\n\nContact the seller about: ${product.name}\n\n(Admin can add a username in the admin panel.)`);
         return;
       }
-      window.open('https://m.me/' + user.replace('@', ''), '_blank');
+      // m.me supports ?text= on mobile app & web to prefill the message
+      const url = `https://m.me/${user}?text=${encoded}`;
+      window.open(url, '_blank');
+    }
+
+    // ===== Search on Facebook Marketplace =====
+    function openMarketplace(product) {
+      const query = encodeURIComponent(`${product.name} ${product.brand || ''}`.trim());
+      const url = `https://www.facebook.com/marketplace/search/?query=${query}`;
+      window.open(url, '_blank');
     }
 
     function renderProducts() {
@@ -249,13 +261,15 @@
           <div class="title">${escapeHtml(p.name)}</div>
           <div class="desc">${escapeHtml(p.desc || 'Luxury piece')}</div>
           <div class="price">$${p.price}</div>
-          <button class="fb-btn">💬 Facebook interesting</button>
+          <div class="action-btns">
+            <button class="fb-btn" title="Message seller on Messenger">💬 Interested</button>
+            <button class="mp-btn" title="Find on Facebook Marketplace">🛒 Marketplace</button>
+          </div>
         `;
-        // Attach handlers safely without JSON-in-HTML
         const imgDiv = card.querySelector('.product-img');
         imgDiv.onclick = () => openLightbox(images, 0);
-        const fbBtn = card.querySelector('.fb-btn');
-        fbBtn.onclick = () => openMessenger(p.fbUser || '', p.name);
+        card.querySelector('.fb-btn').onclick = () => openMessenger(p);
+        card.querySelector('.mp-btn').onclick = () => openMarketplace(p);
         container.appendChild(card);
       });
     }
@@ -266,7 +280,6 @@
       if(clickCount >= 3) location.href = 'admin.html';
     };
 
-    // Live sync across tabs/windows
     try {
       const bc = new BroadcastChannel('givy_sync');
       bc.onmessage = (e) => { if (e.data && e.data.type === 'update') loadData(); };
