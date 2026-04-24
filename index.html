@@ -8,7 +8,16 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0A0A0A; font-family: Arial, sans-serif; color: #EDEDED; padding: 20px; }
-    h1 { text-align: center; color: #C5A267; margin-bottom: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; color: #FFFFFF; }
+    h1 .shop-accent { color: #C5A267; }
+    h1 .logo-float { display: inline-block; animation: floaty 3s ease-in-out infinite; transform-origin: center; }
+    @keyframes floaty {
+      0%   { transform: translateY(0)    rotate(0deg);  }
+      25%  { transform: translateY(-6px) rotate(-3deg); }
+      50%  { transform: translateY(0)    rotate(0deg);  }
+      75%  { transform: translateY(-6px) rotate(3deg);  }
+      100% { transform: translateY(0)    rotate(0deg);  }
+    }
     .filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px; }
     .filter-btn { background: #1A1A1A; border: 1px solid #333; padding: 8px 20px; border-radius: 40px; color: white; cursor: pointer; }
     .filter-btn.active { background: #C5A267; color: black; }
@@ -44,7 +53,7 @@
   </style>
 </head>
 <body>
-  <h1>🛋️ GivyRewardsShop</h1>
+  <h1><span class="logo-float">🛋️</span> GivyRewards<span class="shop-accent">Shop</span></h1>
   <div id="filters" class="filters"></div>
   <div id="products" class="product-grid"><div class="empty">Loading...</div></div>
   <div class="admin-icon" id="adminIcon">👑</div>
