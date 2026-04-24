@@ -39,6 +39,11 @@
     .info-box code { background: #0A0A0A; padding: 2px 6px; border-radius: 4px; color: #C5A267; font-size: 12px; }
     .settings-input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
     .settings-input-row input { margin: 0; flex: 1; }
+    .tab-btn { background: #1A1A1A; border: 1px solid #333; padding: 6px 14px; border-radius: 30px; color: #ccc; cursor: pointer; font-size: 13px; font-weight: normal; margin: 0; }
+    .tab-btn.active { background: #C5A267; color: #000; border-color: #C5A267; font-weight: bold; }
+    .btn-sold { background: #8b2e2e; color: white; }
+    .btn-unmark { background: #3a7f5f; color: white; }
+    .sold-tag { display: inline-block; background: #aa2e2e; color: white; font-size: 11px; padding: 2px 8px; border-radius: 4px; margin-left: 8px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -140,8 +145,15 @@
 
 <!-- PRODUCT LIST -->
 <div class="card">
-  <h3>📦 Products <span id="count" style="background:#C5A267; color:black; padding:2px 10px; border-radius:20px;">0</span></h3>
-  <div id="productList"></div>
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <h3>📦 Products <span id="count" style="background:#C5A267; color:black; padding:2px 10px; border-radius:20px;">0</span></h3>
+    <div id="productTabs" style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="tab-btn active" data-tab="active">Active</button>
+      <button class="tab-btn" data-tab="sold">Sold</button>
+      <button class="tab-btn" data-tab="all">All</button>
+    </div>
+  </div>
+  <div id="productList" style="margin-top:15px;"></div>
 </div>
 ```
 
@@ -521,6 +533,7 @@
       return false;
     }
     const editId = document.getElementById('editId').value;
+    const existing = editId ? products.find(p => p.id == editId) : null;
     const product = {
       id: editId ? parseInt(editId) : Date.now(),
       name, brand: document.getElementById('brand').value.trim(),
@@ -528,7 +541,10 @@
       desc: document.getElementById('desc').value.trim(),
       price,
       fbUser: document.getElementById('fbUser').value.trim(),
-      images: [...currentImages]
+      images: [...currentImages],
+      // preserve sold status when editing
+      sold: existing ? !!existing.sold : false,
+      ...(existing && existing.soldDate ? { soldDate: existing.soldDate } : {})
     };
     const ok = await saveProduct(product);
     if (!ok) return false;
@@ -584,28 +600,81 @@
     }
   };
 
+  let productsTab = 'active'; // 'active' | 'sold' | 'all'
+
   function renderProductList() {
     const container = document.getElementById('productList');
-    if(products.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding:30px; color:#666;">No products yet</div>';
+    let list = products;
+    if (productsTab === 'active') list = products.filter(p => !p.sold);
+    else if (productsTab === 'sold') list = products.filter(p => p.sold);
+
+    // count badge = number of ACTIVE products (so admin sees how many are live)
+    document.getElementById('count').innerText = products.filter(p => !p.sold).length;
+
+    if(list.length === 0) {
+      const msg = productsTab === 'sold' ? 'No sold products yet' :
+                  productsTab === 'active' ? 'No active products' : 'No products yet';
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:#666;">${msg}</div>`;
       return;
     }
-    container.innerHTML = products.map(p => `
-      <div class="product-item">
+    container.innerHTML = list.map(p => {
+      const soldDateStr = p.sold && p.soldDate ? new Date(p.soldDate).toLocaleDateString() : '';
+      return `
+      <div class="product-item" ${p.sold ? 'style="opacity:0.7;"' : ''}>
         <div>
-          <strong style="color:#C5A267;">${escapeHtml(p.name)}</strong><br>
+          <strong style="color:#C5A267;">${escapeHtml(p.name)}</strong>${p.sold ? '<span class="sold-tag">SOLD</span>' : ''}<br>
           <span style="color:#888;">${escapeHtml(p.brand)} | ${p.category}</span><br>
           <span style="color:#C5A267;">$${p.price}</span>
           ${p.fbUser ? `<div style="font-size:11px; color:#1877F2;">FB: ${escapeHtml(p.fbUser)}</div>` : ''}
           ${p.images && p.images.length ? `<div style="font-size:11px; color:#C5A267;">📷 ${p.images.length} photo(s)</div>` : ''}
+          ${p.sold && soldDateStr ? `<div style="font-size:11px; color:#aa2e2e;">Sold on ${soldDateStr}</div>` : ''}
         </div>
         <div>
           <button onclick="editProduct(${p.id})" style="background:#2a5f8a;">✏️ Edit</button>
+          ${p.sold
+            ? `<button onclick="unmarkSold(${p.id})" class="btn-unmark">↩ Unmark</button>`
+            : `<button onclick="markSold(${p.id})" class="btn-sold">✓ Sold</button>`}
           <button onclick="deleteProduct(${p.id})" class="btn-del">🗑️ Delete</button>
         </div>
       </div>
-    `).join('');
+    `;}).join('');
   }
+
+  // Product tabs
+  document.querySelectorAll('#productTabs .tab-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#productTabs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      productsTab = btn.dataset.tab;
+      renderProductList();
+    };
+  });
+
+  window.markSold = async (id) => {
+    const p = products.find(p => p.id == id);
+    if (!p) return;
+    if (!confirm(`Mark "${p.name}" as SOLD?\n\nIt will move to the Sold tab and will be hidden from the main shop view.`)) return;
+    p.sold = true;
+    p.soldDate = Date.now();
+    const ok = await saveProduct(p);
+    if (ok) {
+      renderProductList();
+      showToast(`"${p.name}" marked as sold`);
+    }
+  };
+
+  window.unmarkSold = async (id) => {
+    const p = products.find(p => p.id == id);
+    if (!p) return;
+    if (!confirm(`Mark "${p.name}" as available again?`)) return;
+    p.sold = false;
+    delete p.soldDate;
+    const ok = await saveProduct(p);
+    if (ok) {
+      renderProductList();
+      showToast(`"${p.name}" back in stock`);
+    }
+  };
 
   // ========== FACEBOOK SETTINGS ==========
   document.getElementById('saveGlobalFbBtn').onclick = async () => {
@@ -667,7 +736,7 @@
         csvField(p.id),
         csvField(p.name || ''),
         csvField(p.desc || p.name || 'Luxury furniture piece'),
-        csvField('in stock'),
+        csvField(p.sold ? 'out of stock' : 'in stock'),
         csvField('new'),
         csvField(`${Number(p.price).toFixed(2)} USD`),
         csvField(`${base}/index.html`),
