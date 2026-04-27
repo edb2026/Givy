@@ -1,332 +1,393 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GivyRewardsShop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Together we will win – Break free from addiction. Order the guide, download, and step into victory for yourself and your family.">
+  <title>Victory Radiance | Together We Win</title>
+  <!-- Google Fonts: luxury serif + clean sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 (free icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0A0A0A; font-family: Arial, sans-serif; color: #EDEDED; padding: 20px; }
-    h1 { text-align: center; margin-bottom: 20px; color: #FFFFFF; }
-    h1 .shop-accent { color: #C5A267; }
-    h1 .logo-float { display: inline-block; animation: floaty 3s ease-in-out infinite; transform-origin: center; }
-    @keyframes floaty {
-      0%   { transform: translateY(0)    rotate(0deg);  }
-      25%  { transform: translateY(-6px) rotate(-3deg); }
-      50%  { transform: translateY(0)    rotate(0deg);  }
-      75%  { transform: translateY(-6px) rotate(3deg);  }
-      100% { transform: translateY(0)    rotate(0deg);  }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px; }
-    .filter-btn { background: #1A1A1A; border: 1px solid #333; padding: 8px 20px; border-radius: 40px; color: white; cursor: pointer; }
-    .filter-btn.active { background: #C5A267; color: black; }
-    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-    .product-card { background: #121212; border-radius: 16px; padding: 15px; transition: transform 0.2s; }
-    .product-card:hover { transform: translateY(-5px); }
-    .product-img { background: #1E1E1E; height: 250px; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 15px; position: relative; cursor: pointer; }
-    .product-img img { width: 100%; height: 100%; object-fit: cover; }
-    .img-placeholder { font-size: 60px; }
-    .image-counter { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 20px; font-size: 11px; }
-    .sold-badge { position: absolute; bottom: 10px; left: 10px; background: #E41E3F; color: white; font-weight: bold; font-size: 13px; padding: 5px 12px; border-radius: 6px; letter-spacing: 1px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-transform: uppercase; }
-    .sold-card .product-img img { filter: grayscale(35%) brightness(0.85); }
-    .brand { color: #C5A267; font-size: 12px; }
-    .title { font-size: 18px; font-weight: bold; margin: 8px 0; }
-    .desc { color: #999; font-size: 13px; margin: 10px 0; line-height: 1.4; }
-    .price { color: #C5A267; font-size: 20px; font-weight: bold; }
-    .action-btns { display: flex; gap: 8px; margin-top: 15px; }
-    .fb-btn { background: #1877F2; border: none; padding: 10px; border-radius: 30px; color: white; font-weight: bold; flex: 1; cursor: pointer; font-size: 13px; }
-    .mp-btn { background: #2a7f4f; border: none; padding: 10px; border-radius: 30px; color: white; font-weight: bold; flex: 1; cursor: pointer; font-size: 13px; }
-    .admin-icon { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; background: #C5A267; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0.3; cursor: pointer; z-index: 999; }
-    .empty { text-align: center; padding: 50px; color: #666; }
-    .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: 0.2s; }
-    .lightbox.active { visibility: visible; opacity: 1; }
-    .lightbox img { max-width: 90%; max-height: 85%; object-fit: contain; user-select: none; }
-    .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; cursor: pointer; color: white; user-select: none; }
-    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: white; font-size: 30px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; user-select: none; }
-    .lightbox-nav:hover { background: rgba(255,255,255,0.2); }
-    .lightbox-prev { left: 20px; }
-    .lightbox-next { right: 20px; }
-    .lightbox-counter { position: absolute; top: 20px; left: 30px; color: white; font-size: 16px; background: rgba(0,0,0,0.5); padding: 6px 14px; border-radius: 20px; }
-    .lightbox-thumbs { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; max-width: 90%; overflow-x: auto; padding: 6px; }
-    .lightbox-thumb { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
-    .lightbox-thumb.active { border-color: #C5A267; }
-    .lightbox-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0A0C12;
+      color: #1E1B1A;
+      scroll-behavior: smooth;
+    }
+    /* Hero section with three rejoicing youths and sun rays effect */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      filter: brightness(1.02) contrast(1.05);
+    }
+    /* Simulated sun rays overlay */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 20%, rgba(255,215,130,0.2) 0%, rgba(255,165,50,0.05) 60%, transparent 90%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, rgba(10,12,18,0.2) 0%, rgba(0,0,0,0.3) 100%);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .hero-content {
+      max-width: 1200px;
+      padding: 2rem;
+      z-index: 2;
+      backdrop-filter: blur(2px);
+    }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 9vw, 6.8rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #FFF9F0;
+      text-shadow: 0 8px 28px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.2);
+      margin-bottom: 0.5rem;
+      line-height: 1.1;
+    }
+    .hero h1 span {
+      display: inline-block;
+      border-bottom: 3px solid #E8BC7E;
+      padding-bottom: 0.15em;
+    }
+    .hero .sun-ray-accent {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: 4px;
+      color: #FFE6C7;
+      text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
+      opacity: 0.9;
+    }
+    .scroll-indicator {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #FFE6C7;
+      font-size: 1.4rem;
+      animation: float 2s infinite;
+      cursor: pointer;
+      z-index: 3;
+      background: rgba(0,0,0,0.2);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      transition: 0.2s;
+    }
+    .scroll-indicator:hover {
+      background: rgba(0,0,0,0.4);
+      transform: translateX(-50%) scale(1.05);
+    }
+    @keyframes float {
+      0% { transform: translateX(-50%) translateY(0); opacity: 0.6; }
+      50% { transform: translateX(-50%) translateY(12px); opacity: 1; }
+      100% { transform: translateX(-50%) translateY(0); opacity: 0.6; }
+    }
+    /* Book section – luxury card */
+    .book-section {
+      background: linear-gradient(145deg, #FEF9F0 0%, #FFF7E8 100%);
+      padding: 5rem 2rem 6rem;
+      position: relative;
+    }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .book-showcase {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    /* Book cover placeholder (ready to be replaced with actual cover image) */
+    .book-cover-placeholder {
+      width: 100%;
+      max-width: 380px;
+      margin-bottom: 2.8rem;
+      transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      cursor: pointer;
+      filter: drop-shadow(0 30px 30px rgba(0,0,0,0.15));
+    }
+    .book-cover-placeholder:hover {
+      transform: translateY(-8px);
+      filter: drop-shadow(0 38px 35px rgba(0,0,0,0.2));
+    }
+    .mock-cover {
+      background: linear-gradient(135deg, #1F2A2E 0%, #0F171B 100%);
+      border-radius: 18px;
+      padding: 2rem 1.5rem 2rem;
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,245,0.1);
+      border: 1px solid rgba(232, 188, 126, 0.5);
+      position: relative;
+    }
+    .gold-foil {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 1.8rem;
+      color: #E8BC7E;
+      opacity: 0.6;
+    }
+    .mock-cover h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #E8BC7E;
+      margin-bottom: 1.5rem;
+      border-left: 3px solid #E8BC7E;
+      padding-left: 1rem;
+      text-align: left;
+    }
+    .mock-cover .addiction-line {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'Cormorant Garamond', serif;
+      line-height: 1.2;
+      color: #FFF1DF;
+      margin: 1.2rem 0 1rem;
+      text-transform: uppercase;
+      text-align: left;
+    }
+    .mock-cover .subguide {
+      font-size: 1rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #D4B483;
+      margin-bottom: 1rem;
+      border-top: 1px solid rgba(232,188,126,0.3);
+      padding-top: 1rem;
+      text-align: left;
+    }
+    .mock-cover .verse {
+      font-size: 0.85rem;
+      font-style: italic;
+      color: #C0B28A;
+      text-align: left;
+      margin-top: 1rem;
+    }
+    .mock-cover hr {
+      border-color: rgba(232,188,126,0.3);
+      margin: 1rem 0;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: #E8BC7E;
+      color: #0F171B;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 1rem;
+      border-radius: 40px;
+      letter-spacing: 1px;
+      margin-top: 0.8rem;
+    }
+    .victory-message {
+      margin: 2rem 0 1.5rem;
+    }
+    .victory-message p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      font-weight: 500;
+      color: #2C2418;
+      letter-spacing: -0.3px;
+      text-shadow: 0 1px 0 rgba(255,255,240,0.6);
+    }
+    .amazon-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #1E2A2F;
+      padding: 1rem 2.8rem;
+      border-radius: 60px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.2rem;
+      letter-spacing: 0.5px;
+      color: #FFF7E8;
+      border: 1px solid #E8BC7E;
+      transition: all 0.3s ease;
+      margin: 1rem 0 0.8rem;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+    .amazon-link i {
+      font-size: 1.4rem;
+      color: #E8BC7E;
+    }
+    .amazon-link:hover {
+      background: #0F1A1E;
+      transform: scale(1.02);
+      border-color: #F5CF8E;
+      box-shadow: 0 12px 22px rgba(0,0,0,0.15);
+    }
+    .callout-text {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #4A3B2C;
+      background: rgba(232,188,126,0.18);
+      display: inline-block;
+      padding: 0.5rem 1.8rem;
+      border-radius: 100px;
+      backdrop-filter: blur(2px);
+      margin-top: 0.5rem;
+    }
+    .callout-text i {
+      margin-right: 8px;
+      color: #BE8C4A;
+    }
+    .fine-print {
+      font-size: 0.75rem;
+      color: #8F7A62;
+      margin-top: 2rem;
+    }
+    .footer-note {
+      background: #0F1117;
+      color: #B5A889;
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(232,188,126,0.2);
+    }
+    .footer-note a {
+      color: #E8BC7E;
+      text-decoration: none;
+    }
+    @media (max-width: 760px) {
+      .book-section {
+        padding: 3rem 1.5rem;
+      }
+      .victory-message p {
+        font-size: 1.5rem;
+      }
+      .mock-cover .addiction-line {
+        font-size: 1.6rem;
+      }
+      .amazon-link {
+        padding: 0.8rem 1.8rem;
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1><span class="logo-float">🛋️</span> GivyRewards<span class="shop-accent">Shop</span></h1>
-  <div id="filters" class="filters"></div>
-  <div id="products" class="product-grid"><div class="empty">Loading...</div></div>
-  <div class="admin-icon" id="adminIcon">👑</div>
 
-  <div id="lightbox" class="lightbox">
-    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-    <div class="lightbox-counter" id="lbCounter"></div>
-    <button class="lightbox-nav lightbox-prev" onclick="navLightbox(event, -1)">‹</button>
-    <img id="lightboxImg" src="" alt="">
-    <button class="lightbox-nav lightbox-next" onclick="navLightbox(event, 1)">›</button>
-    <div class="lightbox-thumbs" id="lbThumbs"></div>
-  </div>
+  <!-- HERO: three rejoicing youths in sun rays + slogan "Together we will win" -->
+  <section class="hero">
+    <!-- Free high-res stock photo of three happy young people in golden sunlight (Pexels) -->
+    <img class="hero-bg" src="https://images.pexels.com/photos/6238090/pexels-photo-6238090.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="Three joyful youths celebrating in sun rays">
+    <div class="hero-content">
+      <h1><span>Together we will win</span></h1>
+      <div class="sun-ray-accent">
+        <i class="fas fa-sun"></i> freedom · unity · light <i class="fas fa-sun"></i>
+      </div>
+    </div>
+    <div class="scroll-indicator" onclick="document.querySelector('.book-section').scrollIntoView({behavior:'smooth'})">
+      <i class="fas fa-chevron-down"></i>
+    </div>
+  </section>
 
+  <!-- BOOK SECTION: cover placeholder, Amazon link, victory CTA -->
+  <section class="book-section">
+    <div class="container book-showcase">
+      <!-- Book cover placeholder – replace .mock-cover content with <img> for actual cover -->
+      <div class="book-cover-placeholder" id="bookCoverPlaceholder">
+        <div class="mock-cover">
+          <div class="gold-foil"><i class="fas fa-crown"></i></div>
+          <h3>BREAK·FREE</h3>
+          <div class="addiction-line">
+            ADDICTION HAS <br>NO POWER OVER ME
+          </div>
+          <div class="subguide">
+            A STEP-BY-STEP GUIDE <br>FOR PERSONAL OR FAMILY DELIVERANCE
+          </div>
+          <hr>
+          <div class="verse">
+            <i class="fas fa-feather-alt"></i> Lessons drawn from real stories and based on the Bible.
+          </div>
+          <div class="cover-badge">
+            <i class="fas fa-book-open"></i> VICTORY EDITION
+          </div>
+        </div>
+      </div>
+
+      <!-- Victory call-to-action (English) -->
+      <div class="victory-message">
+        <p>⚡ Order, Download, go to victory — for you & your family ⚡</p>
+      </div>
+
+      <!-- Amazon link -->
+      <a href="https://a.co/d/0j98pcHn" class="amazon-link" target="_blank" rel="noopener noreferrer">
+        <i class="fab fa-amazon"></i> ORDER & DOWNLOAD ON AMAZON <i class="fas fa-arrow-right"></i>
+      </a>
+
+      <div class="callout-text">
+        <i class="fas fa-heart"></i> Claim your personal & family victory today <i class="fas fa-hands-helping"></i>
+      </div>
+      <div class="fine-print">
+        * Instant access — Kindle & Paperback. Your breakthrough starts here.
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer-note">
+    <p><i class="fas fa-globe"></i> Social Impact Initiative — Together we rise, together we win. <br> 
+    © 2025 · Empowerment for every family · Based on real testimonies & biblical truth</p>
+  </footer>
+
+  <!-- Small helper: any developer can replace book cover with actual image -->
   <script>
-    const DB_NAME = 'GivyRewardsDB';
-    const DB_VERSION = 1;
-    const STORE_PRODUCTS = 'products';
-    const STORE_SETTINGS = 'settings';
-
-    let products = [];
-    let categories = ['furniture', 'seating', 'beds', 'rugs', 'decor', 'office'];
-    let activeFilter = 'all';
-    let globalFb = '';
-    let clickCount = 0;
-    let lbImages = [];
-    let lbIndex = 0;
-    let db = null;
-
-    function openDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = (e) => {
-          const database = e.target.result;
-          if (!database.objectStoreNames.contains(STORE_PRODUCTS)) {
-            database.createObjectStore(STORE_PRODUCTS, { keyPath: 'id' });
-          }
-          if (!database.objectStoreNames.contains(STORE_SETTINGS)) {
-            database.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
-          }
-        };
-        req.onsuccess = (e) => { db = e.target.result; resolve(db); };
-        req.onerror = (e) => reject(e.target.error);
-      });
-    }
-
-    function idbGetAll(storeName) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const req = tx.objectStore(storeName).getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    function idbGet(storeName, key) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const req = tx.objectStore(storeName).get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    async function loadData() {
-      try {
-        if (!db) await openDB();
-        products = await idbGetAll(STORE_PRODUCTS);
-        products.sort((a, b) => (a.id || 0) - (b.id || 0));
-
-        const catsRow = await idbGet(STORE_SETTINGS, 'categories');
-        if (catsRow && catsRow.value) categories = catsRow.value;
-
-        const fbRow = await idbGet(STORE_SETTINGS, 'globalFb');
-        globalFb = (fbRow && fbRow.value) || '';
-      } catch(err) {
-        console.error('Load error:', err);
-        const savedProducts = localStorage.getItem('givy_products');
-        products = savedProducts ? JSON.parse(savedProducts) : [];
-        const savedCats = localStorage.getItem('givy_categories');
-        if (savedCats) categories = JSON.parse(savedCats);
-        globalFb = localStorage.getItem('givy_global_fb') || '';
+    (function() {
+      const coverContainer = document.getElementById('bookCoverPlaceholder');
+      if (coverContainer) {
+        // Just a note – no functional change
+        coverContainer.setAttribute('data-note', 'Replace .mock-cover with <img src="your-cover.jpg"> for actual book cover');
       }
-      renderFilters();
-      renderProducts();
-    }
-
-    function renderFilters() {
-      const container = document.getElementById('filters');
-      container.innerHTML = '';
-      const allBtn = document.createElement('button');
-      allBtn.className = 'filter-btn' + (activeFilter === 'all' ? ' active' : '');
-      allBtn.textContent = 'All';
-      allBtn.onclick = () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        allBtn.classList.add('active');
-        activeFilter = 'all';
-        renderProducts();
-      };
-      container.appendChild(allBtn);
-
-      categories.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn' + (activeFilter === cat ? ' active' : '');
-        btn.textContent = cat;
-        btn.onclick = () => {
-          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          activeFilter = cat;
-          renderProducts();
-        };
-        container.appendChild(btn);
-      });
-
-      // Sold archive filter
-      const soldBtn = document.createElement('button');
-      soldBtn.className = 'filter-btn' + (activeFilter === '__sold' ? ' active' : '');
-      soldBtn.textContent = '🏷️ Sold';
-      soldBtn.style.borderColor = '#E41E3F';
-      soldBtn.onclick = () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        soldBtn.classList.add('active');
-        activeFilter = '__sold';
-        renderProducts();
-      };
-      container.appendChild(soldBtn);
-    }
-
-    function openLightbox(images, index) {
-      if (!images || images.length === 0) return;
-      lbImages = images;
-      lbIndex = index || 0;
-      updateLightbox();
-      document.getElementById('lightbox').classList.add('active');
-    }
-
-    function updateLightbox() {
-      document.getElementById('lightboxImg').src = lbImages[lbIndex];
-      document.getElementById('lbCounter').textContent = `${lbIndex + 1} / ${lbImages.length}`;
-      const showNav = lbImages.length > 1;
-      document.querySelector('.lightbox-prev').style.display = showNav ? 'block' : 'none';
-      document.querySelector('.lightbox-next').style.display = showNav ? 'block' : 'none';
-      const thumbs = document.getElementById('lbThumbs');
-      if (lbImages.length > 1) {
-        thumbs.style.display = 'flex';
-        thumbs.innerHTML = lbImages.map((src, i) => `
-          <div class="lightbox-thumb ${i === lbIndex ? 'active' : ''}" onclick="jumpLightbox(event, ${i})">
-            <img src="${src}">
-          </div>
-        `).join('');
-      } else {
-        thumbs.style.display = 'none';
-      }
-    }
-
-    function navLightbox(e, dir) {
-      if (e) e.stopPropagation();
-      lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length;
-      updateLightbox();
-    }
-
-    function jumpLightbox(e, i) {
-      if (e) e.stopPropagation();
-      lbIndex = i;
-      updateLightbox();
-    }
-
-    function closeLightbox() {
-      document.getElementById('lightbox').classList.remove('active');
-    }
-
-    document.getElementById('lightbox').addEventListener('click', (e) => {
-      if (e.target.id === 'lightbox') closeLightbox();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (!document.getElementById('lightbox').classList.contains('active')) return;
-      if (e.key === 'Escape') closeLightbox();
-      else if (e.key === 'ArrowLeft' && lbImages.length > 1) { lbIndex = (lbIndex - 1 + lbImages.length) % lbImages.length; updateLightbox(); }
-      else if (e.key === 'ArrowRight' && lbImages.length > 1) { lbIndex = (lbIndex + 1) % lbImages.length; updateLightbox(); }
-    });
-
-    // ===== Messenger with prefilled message =====
-    function openMessenger(product) {
-      const user = (product.fbUser || globalFb || '').replace(/^@/, '').trim();
-      const msg = `Hello! I'm interested in "${product.name}" (${product.brand || 'GIVY STUDIO'}) — $${product.price}. Is it still available?`;
-      const encoded = encodeURIComponent(msg);
-
-      if (!user) {
-        alert(`No Facebook username set yet.\n\nContact the seller about: ${product.name}\n\n(Admin can add a username in the admin panel.)`);
-        return;
-      }
-      // m.me supports ?text= on mobile app & web to prefill the message
-      const url = `https://m.me/${user}?text=${encoded}`;
-      window.open(url, '_blank');
-    }
-
-    // ===== Search on Facebook Marketplace =====
-    function openMarketplace(product) {
-      const query = encodeURIComponent(`${product.name} ${product.brand || ''}`.trim());
-      const url = `https://www.facebook.com/marketplace/search/?query=${query}`;
-      window.open(url, '_blank');
-    }
-
-    function renderProducts() {
-      const container = document.getElementById('products');
-      let filtered;
-      if (activeFilter === '__sold') {
-        filtered = products.filter(p => p.sold);
-      } else if (activeFilter === 'all') {
-        filtered = products.filter(p => !p.sold);
-      } else {
-        filtered = products.filter(p => !p.sold && p.category === activeFilter);
-      }
-
-      if(filtered.length === 0) {
-        const msg = activeFilter === '__sold' ? '📭 No sold products yet' : '✨ No products';
-        container.innerHTML = `<div class="empty">${msg}</div>`;
-        return;
-      }
-
-      container.innerHTML = '';
-      filtered.forEach((p) => {
-        const images = p.images && p.images.length ? p.images : [];
-        const firstImage = images.length > 0 ? images[0] : null;
-        const imageCount = images.length;
-        const isSold = !!p.sold;
-
-        const card = document.createElement('div');
-        card.className = 'product-card' + (isSold ? ' sold-card' : '');
-        card.innerHTML = `
-          <div class="product-img">
-            ${firstImage ? `<img src="${firstImage}" alt="${escapeHtml(p.name)}">` : '<div class="img-placeholder">🪑</div>'}
-            ${imageCount > 1 ? `<div class="image-counter">📷 ${imageCount}</div>` : ''}
-            ${isSold ? `<div class="sold-badge">Sold</div>` : ''}
-          </div>
-          <div class="brand">${escapeHtml(p.brand || 'GIVY STUDIO')}</div>
-          <div class="title">${escapeHtml(p.name)}</div>
-          <div class="desc">${escapeHtml(p.desc || 'Luxury piece')}</div>
-          <div class="price">$${p.price}</div>
-          <div class="action-btns">
-            <button class="fb-btn" title="Message seller on Messenger"${isSold ? ' disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>💬 Interested</button>
-            <button class="mp-btn" title="Find on Facebook Marketplace">🛒 Marketplace</button>
-          </div>
-        `;
-        const imgDiv = card.querySelector('.product-img');
-        imgDiv.onclick = () => openLightbox(images, 0);
-        if (!isSold) card.querySelector('.fb-btn').onclick = () => openMessenger(p);
-        card.querySelector('.mp-btn').onclick = () => openMarketplace(p);
-        container.appendChild(card);
-      });
-    }
-
-    document.getElementById('adminIcon').onclick = () => {
-      clickCount++;
-      setTimeout(() => clickCount = 0, 500);
-      if(clickCount >= 3) location.href = 'admin.html';
-    };
-
-    try {
-      const bc = new BroadcastChannel('givy_sync');
-      bc.onmessage = (e) => { if (e.data && e.data.type === 'update') loadData(); };
-    } catch(e) {}
-
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'givy_updated') loadData();
-    });
-
-    function escapeHtml(str) { return str ? String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) : ''; }
-
-    loadData();
+    })();
   </script>
-
 </body>
 </html>
